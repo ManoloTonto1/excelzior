@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"runtime"
 	"strconv"
 
 	"github.com/xuri/excelize/v2"
@@ -51,30 +52,20 @@ func loadTemplate() *excelize.File{
 
 }
 
-func checkForErrors(e error, where string){
+// Checks for errors, self explanatory. Shows stack trace if error is Encountered.
+func checkForErrors(e error){
     if e == nil {
         return
     }
-	fmt.Println("THIS IS AN ERROR YOU FUCKED UP around here"+ where )
+	pc := make([]uintptr, 10)  // at least 1 entry needed
+    runtime.Callers(2, pc)
+    f := runtime.FuncForPC(pc[0])
+    file, line := f.FileLine(pc[0])
     fmt.Println(e)
-}
-func getEditableData(file *excelize.File) DocumentInfo{
-	// Get value from cell by given worksheet name and axis.
-	regex := `(?:var_)` 
-	sheet := "Sheet1"
-    cells, err := file.SearchSheet(sheet, regex, true)
-	cellValues := make([]string,len(cells))
-	var docInfo DocumentInfo
-	checkForErrors(err, "getEditableData")
+    fmt.Printf("%s:%d %s\n", file, line, f.Name())
 
-	for i:= 0; i< len(cells); i++ {
-		cellValues[i], err = file.GetCellValue(sheet,cells[i])
-		checkForErrors(err, "getEditableData")
-	}
-	docInfo.cellCoordinates = cells
-	docInfo.variableNames = cellValues
-    return docInfo
 }
+
 func createNewFile(docInfo DocumentInfo){
 	f := loadTemplate()
 
