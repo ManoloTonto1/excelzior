@@ -1,15 +1,17 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
+	"os"
+	"regexp"
 	"runtime"
 
 	"github.com/xuri/excelize/v2"
 )
 type DocumentInfo struct{
-	cellCoordinates []string
-	variableNames []string
-	variableContents []string	
+	VariableNames []string `json:"variables"` 
+	CellCoordinates []string `json:"coordinates"` 
 
 }
 
@@ -18,18 +20,36 @@ func createTemplateJsonFileFromXLSX(fileName string){
 	// Get value from cell by given worksheet name and axis.
 	file := loadExcelTemplateFile(fileName)
 	regex := `(?:var_)`
+	regExp := regexp.MustCompile(regex)
 	sheet := "Sheet1"
-	cells, err := file.SearchSheet(sheet, regex, true)
-	cellValues := make([]string, len(cells))
+
+	cellsCoordinates, err := file.SearchSheet(sheet, regex, true)
+
+	varNames := make([]string, len(cellsCoordinates))
+
 	var docInfo DocumentInfo
 	checkForErrors(err)
 
-	for i := 0; i < len(cells); i++ {
-		cellValues[i], err = file.GetCellValue(sheet, cells[i])
+	for i := 0; i < len(cellsCoordinates); i++ {
+		varNames[i], err = file.GetCellValue(sheet, cellsCoordinates[i])
 		checkForErrors(err)
+		//remove the var_ from the field
+		varNames[i] = cleanField(regExp.ReplaceAllString(varNames[i], ""))
+
 	}
-	docInfo.cellCoordinates = cells
-	docInfo.variableNames = cellValues
+	
+	docInfo.CellCoordinates = cellsCoordinates
+	docInfo.VariableNames = varNames
+
+	Fjson, err := json.MarshalIndent(docInfo,"","\t")
+	checkForErrors(err)
+
+	defer func(){
+		err := os.WriteFile("../../templates/"+fileName+".json",Fjson,0644)
+		checkForErrors(err)
+		fmt.Println("template created: "+fileName+".json")
+	}()
+
 }
 // Checks for errors, self explanatory. Shows stack trace if error is Encountered.
 func checkForErrors(e error){
@@ -46,7 +66,7 @@ func checkForErrors(e error){
 }
 
 func loadExcelTemplateFile(filename string) *excelize.File{
-    ExcelFile, error := excelize.OpenFile("../../templates/invoice"+filename+".xlsx")
+    ExcelFile, error := excelize.OpenFile("../../templates/"+filename+".xlsx")
     checkForErrors(error)
 	    defer func() {
         // Close the spreadsheet.
@@ -57,6 +77,11 @@ func loadExcelTemplateFile(filename string) *excelize.File{
 	return ExcelFile
 
 }
+func cleanField(field string) string{
+	regExp := regexp.MustCompile(`(?: )`)
+	return regExp.ReplaceAllString(field, "")
+}
+
 func main() {
 	// add some shit for it to use incoming data from the network.
 	createTemplateJsonFileFromXLSX("invoice")
