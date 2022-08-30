@@ -84,5 +84,5 @@ func cleanField(field string) string{
 
 func main() {
 	// add some shit for it to use incoming data from the network.
-	createTemplateJsonFileFromXLSX("invoice")
+	createTemplateJsonFileFromXLSX("quote")
 }

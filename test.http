@@ -1,0 +1,42 @@
+@Host = http://localhost:6969/createFile
+get {{Host}}
+###############################################################################################
+
+POST {{Host}}
+Content-Type: application/json
+
+{
+	"docNumber": "2022002",
+	"docname": "Caya Butishi 69",
+	"docType": "invoice",
+	"variables": [
+		"number",
+		"description",
+		"total"
+	],
+	"coordinates": [
+		"C3",
+		"A17",
+		"C32"
+	],
+    "data":[
+		"2022002",
+        "Caya Butishi 69",
+        "1000"
+    ]
+}
+
+
+
+
+###
+
+get {{Host}}/user
+###
+post {{Host}}/
+Content-Type: application/json
+
+{
+    "name": "manolo",
+    "age": "21"
+}
