@@ -9,7 +9,6 @@ import (
 
 	"log"
 	"net/http"
-	"runtime"
 	"strconv"
 
 	"github.com/xuri/excelize/v2"
@@ -26,8 +25,10 @@ type JsonPayload struct {
 }
 
 func loadTemplate() *excelize.File {
-	template, error := excelize.OpenFile("template.xlsx")
-	checkForErrors(error)
+	template, er := excelize.OpenFile("template.xlsx")
+	if er != nil {
+		panic(er)
+	}
 	defer func() {
 		// Close the spreadsheet.
 		if err := template.Close(); err != nil {
@@ -35,20 +36,6 @@ func loadTemplate() *excelize.File {
 		}
 	}()
 	return template
-
-}
-
-// Checks for errors, self explanatory. Shows stack trace if error is Encountered.
-func checkForErrors(e error) {
-	if e == nil {
-		return
-	}
-	pc := make([]uintptr, 10) // at least 1 entry needed
-	runtime.Callers(2, pc)
-	f := runtime.FuncForPC(pc[0])
-	file, line := f.FileLine(pc[0])
-	fmt.Println(e)
-	fmt.Printf("%s:%d %s\n", file, line, f.Name())
 
 }
 
@@ -125,11 +112,14 @@ func main() {
 
 		//go to next step send file via http
 		defer func() {
-			data, err := os.ReadFile(newFile)
+			fileBytes, err := os.ReadFile(newFile)
 			if err != nil {
 				panic(err)
 			}
-			res.Write([]byte(data))
+			res.WriteHeader(http.StatusOK)
+			res.Header().Set("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+			res.Write(fileBytes)
+			os.Remove(newFile)
 
 		}()
 

@@ -9,14 +9,14 @@ import (
 
 	"github.com/xuri/excelize/v2"
 )
-type DocumentInfo struct{
-	VariableNames []string `json:"variables"` 
-	CellCoordinates []string `json:"coordinates"` 
 
+type DocumentInfo struct {
+	VariableNames   []string `json:"variables"`
+	CellCoordinates []string `json:"coordinates"`
 }
 
 // @param Filename has to include the name of the XLSX file ony XLSX is supported.
-func createTemplateJsonFileFromXLSX(fileName string){
+func createTemplateJsonFileFromXLSX(fileName string) {
 	// Get value from cell by given worksheet name and axis.
 	file := loadExcelTemplateFile(fileName)
 	regex := `(?:var_)`
@@ -37,47 +37,48 @@ func createTemplateJsonFileFromXLSX(fileName string){
 		varNames[i] = cleanField(regExp.ReplaceAllString(varNames[i], ""))
 
 	}
-	
+
 	docInfo.CellCoordinates = cellsCoordinates
 	docInfo.VariableNames = varNames
 
-	Fjson, err := json.MarshalIndent(docInfo,"","\t")
+	Fjson, err := json.MarshalIndent(docInfo, "", "\t")
 	checkForErrors(err)
 
-	defer func(){
-		err := os.WriteFile("../../templates/"+fileName+".json",Fjson,0644)
+	defer func() {
+		err := os.WriteFile("../../templates/"+fileName+".json", Fjson, 0644)
 		checkForErrors(err)
-		fmt.Println("template created: "+fileName+".json")
+		fmt.Println("template created: " + fileName + ".json")
 	}()
 
 }
+
 // Checks for errors, self explanatory. Shows stack trace if error is Encountered.
-func checkForErrors(e error){
-    if e == nil {
-        return
-    }
-	pc := make([]uintptr, 10)  // at least 1 entry needed
-    runtime.Callers(2, pc)
-    f := runtime.FuncForPC(pc[0])
-    file, line := f.FileLine(pc[0])
-    fmt.Println(e)
-    fmt.Printf("%s:%d %s\n", file, line, f.Name())
+func checkForErrors(e error) {
+	if e == nil {
+		return
+	}
+	pc := make([]uintptr, 10) // at least 1 entry needed
+	runtime.Callers(2, pc)
+	f := runtime.FuncForPC(pc[0])
+	file, line := f.FileLine(pc[0])
+	fmt.Println(e)
+	fmt.Printf("%s:%d %s\n", file, line, f.Name())
 
 }
 
-func loadExcelTemplateFile(filename string) *excelize.File{
-    ExcelFile, error := excelize.OpenFile("../../templates/"+filename+".xlsx")
-    checkForErrors(error)
-	    defer func() {
-        // Close the spreadsheet.
-        if err := ExcelFile.Close(); err != nil {
-            fmt.Println(err)
-        }
-    }()
+func loadExcelTemplateFile(filename string) *excelize.File {
+	ExcelFile, error := excelize.OpenFile("../../templates/" + filename + ".xlsx")
+	checkForErrors(error)
+	defer func() {
+		// Close the spreadsheet.
+		if err := ExcelFile.Close(); err != nil {
+			fmt.Println(err)
+		}
+	}()
 	return ExcelFile
 
 }
-func cleanField(field string) string{
+func cleanField(field string) string {
 	regExp := regexp.MustCompile(`(?: )`)
 	return regExp.ReplaceAllString(field, "")
 }

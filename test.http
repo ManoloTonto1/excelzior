@@ -31,9 +31,9 @@ Content-Type: application/json
 
 ###
 
-get {{Host}}/user
+
 ###
-post {{Host}}/
+POST http://localhost:6970/
 Content-Type: application/json
 
 {
